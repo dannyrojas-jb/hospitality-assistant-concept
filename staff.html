@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Hospitality Assistant - Interactive Concept - Staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/styles.css">
+</head>
+<body>
+
+<div class="banner"><span class="pill">Interactive concept</span> - A working sample built for this proposal. Simulated assistant, sample data only, stored in your browser. Not the final product.</div>
+
+<div class="top">
+  <div class="logo"><span class="mark">H</span> Harbor &amp; Vine <span class="sub">sample restaurant</span></div>
+  <div class="ctx">Staff side · <b>simulated floor activity plus real owner changes</b></div>
+  <div class="right"><span class="role">Staff view</span></div>
+</div>
+
+<nav class="tabs">
+  <a class="tab" href="index.html"><span class="num">◆</span> Overview</a>
+  <a class="tab" href="guest.html"><span class="num">1</span> Guest</a>
+  <a class="tab" href="owner.html"><span class="num">2</span> Owner</a>
+  <a class="tab on" href="staff.html"><span class="num">3</span> Staff</a>
+</nav>
+
+<div class="wrap">
+  <div class="flow"><b>This feed simulates a live floor.</b> While the page is open, a new event lands every few seconds: orders, translated guest questions, allergy flags. Real changes you make in the <a href="owner.html" style="text-decoration:underline;"><b>Owner dashboard</b></a>, like an 86 or a price edit, appear here too, even from another tab.</div>
+
+  <div class="feedwrap">
+    <div class="simbar">
+      <button type="button" class="btn primary" id="simBtn">Pause simulation</button>
+      <span class="simstate" id="simState"><span class="dot"></span> Simulation running, next event soon</span>
+    </div>
+    <div class="card">
+      <div class="hd"><h2>Live floor feed</h2><span class="count" id="feedCount"></span></div>
+      <div id="feedBox"></div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  <b>Harbor &amp; Vine (Sample Restaurant)</b> · interactive concept demo · all data is sample data and lives only in your browser
+  <span class="sp">|</span> <a class="reset" href="#" data-reset-demo>Reset demo data</a>
+  <span class="sp">|</span> <a href="legacy.html">Original static mockup</a>
+</div>
+
+<script src="shared/app.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var feedBox = document.getElementById('feedBox');
+  var feedCount = document.getElementById('feedCount');
+  var simBtn = document.getElementById('simBtn');
+  var simState = document.getElementById('simState');
+  if (!feedBox) { return; }
+
+  var MAX_SHOWN = 25;
+  var ICONS = { food: '▲', alert: '!', new: '?', ok: '✓' };
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* ---------- Render ---------- */
+
+  function renderFeed(state) {
+    try {
+      var events = (state.events || []).slice();
+      events.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+      events = events.slice(0, MAX_SHOWN);
+
+      if (!events.length) {
+        feedBox.innerHTML = '<div class="empty"><b>The floor is quiet</b>Simulated events and owner changes will appear here.</div>';
+        if (feedCount) { feedCount.textContent = ''; }
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < events.length; i++) {
+        var e = events[i];
+        var type = ICONS.hasOwnProperty(e.type) ? e.type : 'new';
+        html += '<div class="ev"><span class="ic ' + type + '">' + ICONS[type] + '</span>' +
+          '<div><div class="et">' + esc(e.title) +
+          (e.lang ? '<span class="lng">' + esc(e.lang) + '</span>' : '') +
+          '</div><div class="es">' + esc(e.sub) + '</div></div>' +
+          '<span class="time">' + esc(HV.timeAgo(e.ts || Date.now())) + '</span></div>';
+      }
+      feedBox.innerHTML = html;
+      if (feedCount) { feedCount.textContent = '● ' + events.length + ' recent events'; }
+    } catch (err) {
+      feedBox.innerHTML = '<div class="empty"><b>Feed unavailable</b>Try "Reset demo data" in the footer.</div>';
+    }
+  }
+
+  /* ---------- Simulation ---------- */
+
+  function rnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function rndTable() { return Math.floor(Math.random() * 14) + 1; }
+
+  function pickAvailable(state, count) {
+    var avail = [];
+    for (var i = 0; i < state.menu.length; i++) {
+      if (state.menu[i].available) { avail.push(state.menu[i]); }
+    }
+    var out = [];
+    while (avail.length && out.length < count) {
+      out.push(avail.splice(Math.floor(Math.random() * avail.length), 1)[0]);
+    }
+    return out;
+  }
+
+  var ES_QUESTIONS = [
+    { q: '¿El risotto lleva gluten?', t: 'Does the risotto contain gluten?' },
+    { q: '¿Puedo pedir el pollo sin salsa?', t: 'Can I order the chicken without sauce?' },
+    { q: '¿La limonada tiene mucha azúcar?', t: 'Is the lemonade very sweet?' },
+    { q: '¿Cuál es el plato más popular?', t: 'What is the most popular dish?' }
+  ];
+  var AR_QUESTIONS = [
+    { q: 'هل الطاجن حار جدا؟', t: 'Is the tagine very spicy?' },
+    { q: 'هل الشوربة تحتوي على محار؟', t: 'Does the chowder contain shellfish?' },
+    { q: 'هل يمكن تقديم السلطة بدون جبن؟', t: 'Can the salad come without cheese?' }
+  ];
+  var ALLERGIES = ['a shellfish allergy', 'a nut allergy', 'a dairy allergy', 'an egg allergy'];
+
+  function makeEvent() {
+    var state = HV.load();
+    var roll = Math.random();
+    var table = rndTable();
+
+    if (roll < 0.4) {
+      var items = pickAvailable(state, Math.random() < 0.5 ? 2 : 3);
+      if (!items.length) {
+        return { type: 'new', title: 'Table ' + table + ' asked a question', sub: 'Guest asked what is available tonight. The assistant listed the current live menu.', lang: '' };
+      }
+      var names = [];
+      var total = 0;
+      for (var i = 0; i < items.length; i++) { names.push(items[i].name.en); total += items[i].price; }
+      return { type: 'food', title: 'Table ' + table + ' placed an order', sub: names.join(' + ') + ', ' + HV.fmtPrice(total) + ', sent to kitchen', lang: '' };
+    }
+    if (roll < 0.6) {
+      var qs = rnd(ES_QUESTIONS);
+      return { type: 'new', title: 'Table ' + table + ' asked a question', sub: '"' + qs.q + '" Translation: ' + qs.t + ' The assistant answered from the live menu.', lang: 'ES to EN' };
+    }
+    if (roll < 0.75) {
+      var qa = rnd(AR_QUESTIONS);
+      return { type: 'new', title: 'Table ' + table + ' asked a question', sub: '"' + qa.q + '" Translation: ' + qa.t + ' The assistant answered from the live menu.', lang: 'AR to EN' };
+    }
+    if (roll < 0.88) {
+      return { type: 'alert', title: 'Allergy flag, Table ' + table, sub: 'Guest noted ' + rnd(ALLERGIES) + '. Kitchen notified, allergen tags checked against the live menu.', lang: Math.random() < 0.4 ? 'ES to EN' : '' };
+    }
+    return { type: 'ok', title: 'Table ' + table + ' ready for the check', sub: 'Guest requested the bill through the assistant.', lang: '' };
+  }
+
+  var timer = null;
+  var TICK_MS = 6000;
+
+  function tick() {
+    try { HV.addEvent(makeEvent()); } catch (e) { /* keep the loop alive */ }
+    /* addEvent saves state, which notifies local subscribers and re-renders */
+  }
+
+  function startSim() {
+    if (timer) { return; }
+    timer = window.setInterval(tick, TICK_MS);
+    if (simBtn) { simBtn.textContent = 'Pause simulation'; simBtn.classList.add('primary'); }
+    if (simState) {
+      simState.className = 'simstate';
+      simState.innerHTML = '<span class="dot"></span> Simulation running, a new event every few seconds';
+    }
+  }
+
+  function stopSim() {
+    if (timer) { window.clearInterval(timer); timer = null; }
+    if (simBtn) { simBtn.textContent = 'Resume simulation'; simBtn.classList.remove('primary'); }
+    if (simState) {
+      simState.className = 'simstate paused';
+      simState.innerHTML = '<span class="dot"></span> Simulation paused, owner changes still come through';
+    }
+  }
+
+  if (simBtn) {
+    simBtn.addEventListener('click', function () {
+      if (timer) { stopSim(); } else { startSim(); }
+    });
+  }
+
+  /* Re-render on any state change: local sim writes and other-tab owner changes. */
+  HV.onChange(function (state) { renderFeed(state); });
+
+  /* Keep the relative timestamps fresh. */
+  window.setInterval(function () { renderFeed(HV.load()); }, 30000);
+
+  renderFeed(HV.load());
+  startSim();
+  /* First simulated event arrives quickly so the page feels alive. */
+  window.setTimeout(tick, 1800);
+})();
+</script>
+</body>
+</html>

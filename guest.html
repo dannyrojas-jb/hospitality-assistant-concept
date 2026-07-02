@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Hospitality Assistant - Interactive Concept - Guest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/styles.css">
+</head>
+<body>
+
+<div class="banner"><span class="pill">Interactive concept</span> - A working sample built for this proposal. Simulated assistant, sample data only, stored in your browser. Not the final product.</div>
+
+<div class="top">
+  <div class="logo"><span class="mark">H</span> Harbor &amp; Vine <span class="sub">sample restaurant</span></div>
+  <div class="ctx">Guest side · <b>answers come from the live menu state</b></div>
+  <div class="right"><span class="role">Guest view</span></div>
+</div>
+
+<nav class="tabs">
+  <a class="tab" href="index.html"><span class="num">◆</span> Overview</a>
+  <a class="tab on" href="guest.html"><span class="num">1</span> Guest</a>
+  <a class="tab" href="owner.html"><span class="num">2</span> Owner</a>
+  <a class="tab" href="staff.html"><span class="num">3</span> Staff</a>
+</nav>
+
+<div class="wrap">
+  <div class="flow"><b>This chat is live against the demo data.</b> Every answer is generated from the menu state in your browser. 86 a dish or change a price in the <a href="owner.html" style="text-decoration:underline;"><b>Owner dashboard</b></a> and ask about it here, the assistant reflects the change immediately.</div>
+
+  <div class="gcols">
+    <div class="phone">
+      <div class="screen">
+        <div class="gbar">
+          <span class="gm">H</span>
+          <div><div class="gt">Harbor &amp; Vine</div><div class="gs" id="gStatus">● Table 12 · assistant online</div></div>
+          <span class="sim" id="gSim">Simulated responses, no live AI</span>
+        </div>
+        <div class="ground" id="gGround">◆ Grounded to the live menu</div>
+        <div class="langrow" id="gLangs">
+          <button type="button" class="lang on" data-lang="en">EN</button>
+          <button type="button" class="lang" data-lang="es">ES</button>
+          <button type="button" class="lang" data-lang="ar">AR (right-to-left)</button>
+        </div>
+        <div class="chat" id="gChat" aria-live="polite"></div>
+        <div class="chips" id="gChips"></div>
+        <form class="ginput" id="gForm">
+          <input type="text" id="gInput" autocomplete="off" placeholder="Message Harbor &amp; Vine..." aria-label="Message the assistant">
+          <button type="submit" class="gsend" id="gSend" aria-label="Send">↑</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="gside">
+      <h3>What to notice</h3>
+      <p>The assistant never invents dishes. It reads the same menu record the owner edits, so availability, prices, and allergen answers are always current. The responses here are scripted for the demo, the grounding behavior is the point.</p>
+      <div class="feat"><span class="fi">◆</span><div class="fb"><b>Menu-grounded, never invented</b><span>86 the salmon in the Owner tab, then ask about it here. The assistant declines it and offers another main at its live price.</span></div></div>
+      <div class="feat"><span class="fi">$</span><div class="fb"><b>Live prices</b><span>Change a price in the Owner tab and the assistant quotes the new number on the next question.</span></div></div>
+      <div class="feat"><span class="fi">🗣</span><div class="fb"><b>English, Spanish, Arabic</b><span>The toggle switches labels, quick replies, and answers. Arabic renders fully right-to-left.</span></div></div>
+      <div class="feat"><span class="fi">?</span><div class="fb"><b>Type your own question</b><span>Free text is keyword-matched to the same intents: recommendations, gluten free, dish availability, splitting the check.</span></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  <b>Harbor &amp; Vine (Sample Restaurant)</b> · interactive concept demo · all data is sample data and lives only in your browser
+  <span class="sp">|</span> <a class="reset" href="#" data-reset-demo>Reset demo data</a>
+  <span class="sp">|</span> <a href="legacy.html">Original static mockup</a>
+</div>
+
+<script src="shared/app.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var chat = document.getElementById('gChat');
+  var chipsBox = document.getElementById('gChips');
+  var form = document.getElementById('gForm');
+  var input = document.getElementById('gInput');
+  var langRow = document.getElementById('gLangs');
+  var groundEl = document.getElementById('gGround');
+  var statusEl = document.getElementById('gStatus');
+  var simEl = document.getElementById('gSim');
+  if (!chat || !chipsBox || !form || !input) { return; }
+
+  var lang = 'en';
+
+  /* ---------- Language pack ---------- */
+
+  var I18N = {
+    en: {
+      dir: 'ltr',
+      status: '● Table 12 · assistant online',
+      sim: 'Simulated responses, no live AI',
+      placeholder: 'Message Harbor & Vine...',
+      grounded: function (n) { return '◆ Grounded to the live menu, ' + n + ' dishes available tonight'; },
+      chips: [
+        { label: 'What do you recommend?', intent: 'recommend' },
+        { label: 'Anything gluten free?', intent: 'gluten' },
+        { label: 'Is the salmon available?', intent: 'availSalmon' },
+        { label: 'Split the check', intent: 'split' }
+      ],
+      greeting: 'Welcome to Harbor & Vine. Ask me about tonight\'s menu. I answer from the live menu data, so anything the owner changes shows up here instantly.',
+      langSet: 'Language set to English.',
+      recommend: function (m, s, d) {
+        var out = 'Tonight I would go for the ' + m.n + ', ' + m.p + '. ' + m.d;
+        if (s) { out += '\nTo start, the ' + s.n + ' (' + s.p + ') is a table favorite.'; }
+        if (d) { out += ' A ' + d.n + ' (' + d.p + ') rounds it out nicely.'; }
+        return out + '\nEverything I mention is on the live menu right now.';
+      },
+      recommendEmpty: function (list) { return 'The kitchen is running a limited menu right now. Here is what is available: ' + list + '.'; },
+      gluten: function (list) { return 'Yes. Checking the live menu, these are gluten free tonight: ' + list + '. For a celiac level sensitivity, your server can confirm prep details with the kitchen.'; },
+      glutenEmpty: 'I checked the live menu and nothing gluten free is available right now, sorry. Please check back with your server.',
+      menuEmpty: 'Tonight the kitchen has paused the full menu. Please check with your server, or use "Reset demo data" in the footer to restore the sample menu.',
+      availYes: function (i) { return 'Yes, the ' + i.n + ' is available tonight at ' + i.p + '. ' + i.d; },
+      availNo: function (i, alt) { return 'I am sorry, the ' + i.n + ' is not available tonight. The kitchen took it off the live menu. From the same section, the ' + alt.n + ' (' + alt.p + ') is a great pick instead.'; },
+      availNoAlt: function (i) { return 'I am sorry, the ' + i.n + ' is not available tonight and that section is running low. Would you like a recommendation from the rest of the menu?'; },
+      split: 'Of course. I can split the check evenly or by seat. In this demo that hands off to your server, but in the full product you would confirm the split and pay right here.',
+      fallback: 'This is a scripted demo, so I only cover a few topics: recommendations, gluten free options, whether a specific dish is available, and splitting the check. Try one of the buttons below.'
+    },
+    es: {
+      dir: 'ltr',
+      status: '● Mesa 12 · asistente en línea',
+      sim: 'Respuestas simuladas, sin IA en vivo',
+      placeholder: 'Escriba a Harbor & Vine...',
+      grounded: function (n) { return '◆ Conectado al menú en vivo, ' + n + ' platos disponibles esta noche'; },
+      chips: [
+        { label: '¿Qué me recomienda?', intent: 'recommend' },
+        { label: '¿Hay platos sin gluten?', intent: 'gluten' },
+        { label: '¿Está disponible el salmón?', intent: 'availSalmon' },
+        { label: 'Dividir la cuenta', intent: 'split' }
+      ],
+      greeting: 'Bienvenido a Harbor & Vine. Pregúnteme por el menú de esta noche. Respondo con los datos del menú en vivo, así que cualquier cambio del dueño aparece aquí al instante.',
+      langSet: 'Idioma cambiado a español.',
+      recommend: function (m, s, d) {
+        var out = 'Esta noche le recomendaría ' + m.n + ', ' + m.p + '. ' + m.d;
+        if (s) { out += '\nPara empezar, ' + s.n + ' (' + s.p + ') es de los favoritos.'; }
+        if (d) { out += ' Y ' + d.n + ' (' + d.p + ') acompaña muy bien.'; }
+        return out + '\nTodo lo que menciono está en el menú en vivo ahora mismo.';
+      },
+      recommendEmpty: function (list) { return 'La cocina tiene un menú limitado en este momento. Esto es lo que hay disponible: ' + list + '.'; },
+      gluten: function (list) { return 'Sí. Según el menú en vivo, estos platos no llevan gluten esta noche: ' + list + '. Si su sensibilidad es alta, su mesero puede confirmar la preparación con la cocina.'; },
+      glutenEmpty: 'Revisé el menú en vivo y por ahora no hay platos sin gluten disponibles, lo siento. Consulte con su mesero.',
+      menuEmpty: 'La cocina pausó el menú completo esta noche. Consulte con su mesero o use "Reset demo data" en el pie de página para restaurar el menú de muestra.',
+      availYes: function (i) { return 'Sí, ' + i.n + ' está disponible esta noche por ' + i.p + '. ' + i.d; },
+      availNo: function (i, alt) { return 'Lo siento, ' + i.n + ' no está disponible esta noche. La cocina lo retiró del menú en vivo. De la misma sección, ' + alt.n + ' (' + alt.p + ') es una excelente opción.'; },
+      availNoAlt: function (i) { return 'Lo siento, ' + i.n + ' no está disponible esta noche y esa sección está casi agotada. ¿Le doy una recomendación del resto del menú?'; },
+      split: 'Claro. Puedo dividir la cuenta en partes iguales o por persona. En esta demo eso pasa a su mesero, pero en el producto final confirmaría la división y pagaría aquí mismo.',
+      fallback: 'Esta es una demo con guion, así que solo cubro algunos temas: recomendaciones, opciones sin gluten, la disponibilidad de un plato y dividir la cuenta. Pruebe uno de los botones.'
+    },
+    ar: {
+      dir: 'rtl',
+      status: '● طاولة 12 · المساعد متصل',
+      sim: 'ردود محاكاة، بدون ذكاء اصطناعي مباشر',
+      placeholder: 'اكتب رسالة إلى Harbor & Vine...',
+      grounded: function (n) { return '◆ متصل بالقائمة المباشرة، ' + n + ' طبقا متوفرا الليلة'; },
+      chips: [
+        { label: 'بماذا تنصحني؟', intent: 'recommend' },
+        { label: 'هل توجد أطباق خالية من الغلوتين؟', intent: 'gluten' },
+        { label: 'هل السلمون متوفر؟', intent: 'availSalmon' },
+        { label: 'تقسيم الفاتورة', intent: 'split' }
+      ],
+      greeting: 'أهلا بك في Harbor & Vine. اسألني عن قائمة الليلة. أجيب من بيانات القائمة المباشرة، فأي تغيير يجريه المالك يظهر هنا فورا.',
+      langSet: 'تم تغيير اللغة إلى العربية.',
+      recommend: function (m, s, d) {
+        var out = 'أنصحك الليلة بطبق ' + m.n + ' بسعر ' + m.p + '. ' + m.d;
+        if (s) { out += '\nوللبداية، ' + s.n + ' (' + s.p + ') من الأطباق المفضلة.'; }
+        if (d) { out += ' ويناسبها ' + d.n + ' (' + d.p + ').'; }
+        return out + '\nكل ما أذكره موجود في القائمة المباشرة الآن.';
+      },
+      recommendEmpty: function (list) { return 'المطبخ يعمل بقائمة محدودة حاليا. هذا ما هو متوفر الآن: ' + list + '.'; },
+      gluten: function (list) { return 'نعم. بحسب القائمة المباشرة، هذه الأطباق خالية من الغلوتين الليلة: ' + list + '. وإذا كانت حساسيتك شديدة، يمكن للنادل تأكيد طريقة التحضير مع المطبخ.'; },
+      glutenEmpty: 'راجعت القائمة المباشرة ولا يوجد حاليا طبق خال من الغلوتين، عذرا. يرجى سؤال النادل.',
+      menuEmpty: 'أوقف المطبخ القائمة بالكامل الليلة. يرجى مراجعة النادل، أو استخدام "Reset demo data" أسفل الصفحة لاستعادة القائمة التجريبية.',
+      availYes: function (i) { return 'نعم، ' + i.n + ' متوفر الليلة بسعر ' + i.p + '. ' + i.d; },
+      availNo: function (i, alt) { return 'عذرا، ' + i.n + ' غير متوفر الليلة، فقد أزاله المطبخ من القائمة المباشرة. من القسم نفسه، أقترح عليك ' + alt.n + ' (' + alt.p + ') كخيار ممتاز.'; },
+      availNoAlt: function (i) { return 'عذرا، ' + i.n + ' غير متوفر الليلة وهذا القسم شبه منتهٍ. هل تود توصية من بقية القائمة؟'; },
+      split: 'بالتأكيد. يمكنني تقسيم الفاتورة بالتساوي أو حسب كل شخص. في هذه النسخة التجريبية يتولى النادل ذلك، أما في المنتج النهائي فستؤكد التقسيم وتدفع هنا مباشرة.',
+      fallback: 'هذه نسخة تجريبية بردود مبرمجة، لذا أغطي مواضيع محددة فقط: التوصيات، الخيارات الخالية من الغلوتين، توفر طبق معين، وتقسيم الفاتورة. جرب أحد الأزرار أدناه.'
+    }
+  };
+
+  /* ---------- Small helpers ---------- */
+
+  function L() { return I18N[lang] || I18N.en; }
+
+  function itemView(item) {
+    return {
+      n: (item.name && (item.name[lang] || item.name.en)) || '',
+      d: (item.desc && (item.desc[lang] || item.desc.en)) || '',
+      p: HV.fmtPrice(item.price)
+    };
+  }
+
+  function listNames(items, max) {
+    var parts = [];
+    for (var i = 0; i < items.length && i < max; i++) {
+      var v = itemView(items[i]);
+      parts.push(v.n + ' (' + v.p + ')');
+    }
+    return parts.join(', ');
+  }
+
+  function availItems(state) {
+    var out = [];
+    for (var i = 0; i < state.menu.length; i++) {
+      if (state.menu[i].available) { out.push(state.menu[i]); }
+    }
+    return out;
+  }
+
+  function byCategory(items, cat) {
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].category === cat) { out.push(items[i]); }
+    }
+    return out;
+  }
+
+  function pickFeaturedFirst(items) {
+    for (var i = 0; i < items.length; i++) { if (items[i].featured) { return items[i]; } }
+    return items.length ? items[0] : null;
+  }
+
+  /* ---------- Reply builders, always read fresh live state ---------- */
+
+  function replyRecommend() {
+    var state = HV.load();
+    var avail = availItems(state);
+    var main = pickFeaturedFirst(byCategory(avail, 'Mains'));
+    if (!main) {
+      if (!avail.length) { return L().menuEmpty; }
+      return L().recommendEmpty(listNames(avail, 4));
+    }
+    var starter = pickFeaturedFirst(byCategory(avail, 'Starters'));
+    var drink = pickFeaturedFirst(byCategory(avail, 'Drinks'));
+    return L().recommend(itemView(main), starter ? itemView(starter) : null, drink ? itemView(drink) : null);
+  }
+
+  function replyGluten() {
+    var state = HV.load();
+    var avail = availItems(state);
+    var gf = [];
+    for (var i = 0; i < avail.length; i++) {
+      var al = avail[i].allergens || [];
+      var has = false;
+      for (var j = 0; j < al.length; j++) { if (al[j] === 'gluten') { has = true; break; } }
+      if (!has) { gf.push(avail[i]); }
+    }
+    if (!gf.length) { return L().glutenEmpty; }
+    return L().gluten(listNames(gf, 5));
+  }
+
+  function replyAvail(itemId) {
+    var state = HV.load();
+    var item = HV.getItem(state, itemId);
+    if (!item) { return L().fallback; }
+    var v = itemView(item);
+    if (item.available) { return L().availYes(v); }
+    var sameCat = byCategory(availItems(state), item.category);
+    var alt = pickFeaturedFirst(sameCat);
+    if (alt) { return L().availNo(v, itemView(alt)); }
+    return L().availNoAlt(v);
+  }
+
+  /* ---------- Free text intent matching ---------- */
+
+  function containsAny(t, arr) {
+    for (var i = 0; i < arr.length; i++) {
+      if (t.indexOf(arr[i]) !== -1) { return true; }
+    }
+    return false;
+  }
+
+  var KW = {
+    gluten: ['gluten', 'غلوتين', 'جلوتين'],
+    split: ['split', 'divid', 'separ', 'check please', 'the check', 'the bill', 'la cuenta', 'تقسيم', 'نقسم', 'فاتورة', 'الحساب'],
+    recommend: ['recommend', 'suggest', 'what should', 'popular', 'best', 'good tonight', 'what is good', "what's good", 'recomiend', 'recomend', 'suger', 'sugier', 'que me', 'qué me', 'mejor', 'توصي', 'تنصح', 'اقترح', 'أفضل', 'الأفضل']
+  };
+
+  function findDish(text) {
+    var state = HV.load();
+    for (var i = 0; i < state.menu.length; i++) {
+      var kws = state.menu[i].kw || [];
+      for (var j = 0; j < kws.length; j++) {
+        if (text.indexOf(kws[j].toLowerCase()) !== -1) { return state.menu[i]; }
+      }
+    }
+    return null;
+  }
+
+  function replyForText(text) {
+    var t = (text || '').toLowerCase();
+    if (containsAny(t, KW.gluten)) { return replyGluten(); }
+    if (containsAny(t, KW.split)) { return L().split; }
+    var dish = findDish(t);
+    if (dish) { return replyAvail(dish.id); }
+    if (containsAny(t, KW.recommend)) { return replyRecommend(); }
+    if (/(^|\s)(hello|hi|hey|hola|buenas)(\s|!|\?|\.|,|$)/.test(t) || t.indexOf('مرحبا') !== -1 || t.indexOf('أهلا') !== -1 || t.indexOf('السلام') !== -1) { return L().greeting; }
+    return L().fallback;
+  }
+
+  function replyForIntent(intent) {
+    if (intent === 'recommend') { return replyRecommend(); }
+    if (intent === 'gluten') { return replyGluten(); }
+    if (intent === 'availSalmon') { return replyAvail('salmon'); }
+    if (intent === 'split') { return L().split; }
+    return L().fallback;
+  }
+
+  /* ---------- Chat rendering ---------- */
+
+  function addBubble(kind, text) {
+    var el = document.createElement('div');
+    el.className = 'b ' + kind;
+    el.textContent = text;
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+    return el;
+  }
+
+  var busy = false;
+  function respond(makeReply) {
+    busy = true;
+    var t = document.createElement('div');
+    t.className = 'typing';
+    t.innerHTML = '<i></i><i></i><i></i>';
+    chat.appendChild(t);
+    chat.scrollTop = chat.scrollHeight;
+    window.setTimeout(function () {
+      var text;
+      try { text = makeReply(); } catch (e) { text = L().fallback; }
+      if (t.parentNode) { t.parentNode.removeChild(t); }
+      addBubble('ai', text);
+      busy = false;
+    }, 650);
+  }
+
+  function sendUser(text, makeReply) {
+    if (busy || !text) { return; }
+    addBubble('me', text);
+    respond(makeReply);
+  }
+
+  /* ---------- UI language ---------- */
+
+  function renderChips() {
+    chipsBox.innerHTML = '';
+    var defs = L().chips;
+    for (var i = 0; i < defs.length; i++) {
+      (function (def) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'chip';
+        btn.textContent = def.label;
+        btn.addEventListener('click', function () {
+          sendUser(def.label, function () { return replyForIntent(def.intent); });
+        });
+        chipsBox.appendChild(btn);
+      })(defs[i]);
+    }
+  }
+
+  function renderGround() {
+    if (!groundEl) { return; }
+    var n = 0;
+    try { n = availItems(HV.load()).length; } catch (e) { n = 0; }
+    groundEl.textContent = L().grounded(n);
+  }
+
+  function applyLang(next, announce) {
+    lang = next;
+    var pack = L();
+    var dir = pack.dir;
+    chat.setAttribute('dir', dir);
+    chipsBox.setAttribute('dir', dir);
+    input.setAttribute('dir', dir);
+    if (groundEl) { groundEl.setAttribute('dir', dir); }
+    input.placeholder = pack.placeholder;
+    if (statusEl) { statusEl.textContent = pack.status; }
+    if (simEl) { simEl.textContent = pack.sim; }
+    renderChips();
+    renderGround();
+    var btns = langRow ? langRow.querySelectorAll('.lang') : [];
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('on', btns[i].getAttribute('data-lang') === next);
+    }
+    if (announce) { addBubble('ai', pack.langSet); }
+  }
+
+  if (langRow) {
+    langRow.addEventListener('click', function (ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest('.lang') : null;
+      if (!btn) { return; }
+      var next = btn.getAttribute('data-lang');
+      if (next && next !== lang) { applyLang(next, true); }
+    });
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var text = input.value.replace(/^\s+|\s+$/g, '');
+    if (!text) { return; }
+    input.value = '';
+    sendUser(text, function () { return replyForText(text); });
+  });
+
+  /* Live count updates when the owner changes things in another tab. */
+  HV.onChange(function () { renderGround(); });
+
+  /* ---------- Boot ---------- */
+  applyLang('en', false);
+  addBubble('ai', L().greeting);
+})();
+</script>
+</body>
+</html>

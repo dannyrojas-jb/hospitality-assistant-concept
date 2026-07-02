@@ -3,280 +3,80 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Hospitality Assistant - Concept (Guest / Owner / Staff)</title>
+<title>AI Hospitality Assistant - Interactive Concept - Overview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#1c1917;--panel:#ffffff;--app:#f5f3f0;--line:#e7e2db;
-    --ink:#1c1917;--ink2:#57534e;--ink3:#a8a29e;
-    --accent:#b45309;--accent-d:#92400e;--accent-soft:#fef3e2;
-    --gold:#d97706;
-    --ok:#15803d;--ok-bg:#f0fdf4;
-    --warn:#b45309;--warn-bg:#fffbeb;
-    --crit:#b91c1c;--crit-bg:#fef2f2;
-    --info:#0e7490;--info-bg:#ecfeff;
-    --font:'Inter',system-ui,Segoe UI,sans-serif;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:var(--font);background:var(--app);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
-  a{color:inherit;text-decoration:none;}
-
-  .banner{background:var(--bg);color:#d6d3d1;font-size:12.5px;letter-spacing:.02em;text-align:center;padding:9px 16px;}
-  .banner b{color:#fff;}
-  .banner .pill{display:inline-block;background:var(--accent);color:#fff;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:5px;margin-right:8px;vertical-align:1px;}
-
-  .top{display:flex;align-items:center;gap:14px;background:var(--bg);color:#e7e5e4;padding:14px 22px;border-bottom:1px solid #292524;}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;color:#fff;letter-spacing:-.2px;}
-  .logo .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--gold));display:grid;place-items:center;color:#2b1608;font-size:15px;font-weight:800;}
-  .top .ctx{margin-left:6px;padding-left:14px;border-left:1px solid #44403c;color:#a8a29e;font-size:13px;}
-  .top .ctx b{color:#e7e5e4;font-weight:600;}
-  .top .right{margin-left:auto;display:flex;align-items:center;gap:14px;color:#a8a29e;font-size:12.5px;}
-  .top .role{background:#292524;border:1px solid #44403c;border-radius:999px;padding:5px 12px;color:#d6d3d1;font-weight:600;}
-  .top .who{width:30px;height:30px;border-radius:50%;background:#44403c;display:grid;place-items:center;color:#e7e5e4;font-weight:700;font-size:12px;}
-
-  .tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--line);padding:0 22px;position:sticky;top:0;z-index:20;overflow-x:auto;}
-  .tab{padding:15px 18px;font-weight:600;font-size:14px;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;transition:.15s;display:flex;align-items:center;gap:8px;white-space:nowrap;}
-  .tab:hover{color:var(--ink2);}
-  .tab.on{color:var(--accent-d);border-bottom-color:var(--accent);}
-  .tab .num{width:20px;height:20px;border-radius:50%;background:var(--app);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--ink3);}
-  .tab.on .num{background:var(--accent);color:#fff;}
-
-  .wrap{max-width:1180px;margin:0 auto;padding:24px 22px 40px;}
-  .view{display:none;}
-  .view.on{display:block;animation:fade .25s ease;}
-  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(28,25,23,.04);}
-  .card .hd{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
-  .card .hd h2{font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ink2);}
-  .card .hd .count{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink3);}
-  .flow{color:var(--ink2);font-size:13.5px;margin:0 0 20px;padding:12px 16px;background:var(--accent-soft);border:1px solid #fbe3c4;border-radius:10px;}
-  .flow b{color:var(--accent-d);}
-
-  /* ===== Guest view ===== */
-  .gcols{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;}
-  @media(max-width:860px){.gcols{grid-template-columns:1fr;}}
-  .phone{background:#0c0a09;border-radius:34px;padding:12px;box-shadow:0 24px 60px rgba(28,25,23,.28);max-width:340px;margin:0 auto;}
-  .screen{background:var(--app);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;height:600px;}
-  .gbar{background:#fff;padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
-  .gbar .gm{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--gold));display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;}
-  .gbar .gt{font-weight:700;font-size:14px;}
-  .gbar .gs{font-size:11px;color:var(--ok);font-weight:600;}
-  .ground{margin:10px 12px 0;font-size:11px;color:var(--accent-d);background:var(--accent-soft);border:1px solid #fbe3c4;border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;}
-  .chat{flex:1;overflow:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;}
-  .b{max-width:86%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.5;}
-  .b.ai{background:#fff;border:1px solid var(--line);color:var(--ink);align-self:flex-start;border-bottom-left-radius:4px;}
-  .b.me{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
-  .rec{align-self:flex-start;max-width:92%;background:#fff;border:1px solid var(--line);border-radius:14px;border-bottom-left-radius:4px;padding:11px 13px;}
-  .rec .dish{display:flex;align-items:center;gap:10px;}
-  .rec .dish + .dish{margin-top:10px;padding-top:10px;border-top:1px solid #f4f1ec;}
-  .rec .thumb{width:42px;height:42px;border-radius:9px;object-fit:cover;flex:0 0 42px;}
-  .rec .dn{font-weight:700;font-size:13px;}
-  .rec .dd{font-size:11.5px;color:var(--ink3);}
-  .rec .dp{margin-left:auto;font-weight:700;font-size:13px;color:var(--accent-d);}
-  .rec .tag{display:inline-block;margin-top:2px;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ok);background:var(--ok-bg);padding:1px 6px;border-radius:4px;}
-  .pair{margin-top:10px;padding-top:10px;border-top:1px solid #f4f1ec;font-size:12px;color:var(--ink2);}
-  .pair b{color:var(--accent-d);}
-  .ginput{background:#fff;border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:8px;align-items:center;}
-  .ginput .gi{flex:1;background:var(--app);border:1px solid var(--line);border-radius:999px;padding:9px 13px;color:var(--ink3);font-size:12.5px;}
-  .ginput .gsend{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;}
-  .langrow{display:flex;gap:7px;margin:0 12px 10px;flex-wrap:wrap;}
-  .lang{font-size:11px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:999px;padding:4px 11px;cursor:pointer;}
-  .lang.on{background:var(--ink);color:#fff;border-color:var(--ink);}
-  .gside h3{font-size:15px;font-weight:800;margin-bottom:8px;letter-spacing:-.2px;}
-  .gside p{color:var(--ink2);font-size:13.5px;margin-bottom:14px;}
-  .feat{display:flex;gap:11px;padding:13px 0;border-top:1px solid #f4f1ec;}
-  .feat:first-of-type{border-top:0;}
-  .feat .fi{width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent-d);display:grid;place-items:center;font-weight:800;flex:0 0 30px;font-size:14px;}
-  .feat .fb b{display:block;font-size:13.5px;}
-  .feat .fb span{font-size:12.5px;color:var(--ink3);}
-
-  /* ===== Owner dashboard ===== */
-  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
-  @media(max-width:640px){.tiles{grid-template-columns:repeat(2,1fr);}}
-  .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
-  .tile .n{font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1;color:var(--accent-d);}
-  .tile .l{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);margin-top:6px;}
-  .tile .up{font-size:11.5px;font-weight:700;color:var(--ok);margin-top:5px;}
-  .tile.ok .n{color:var(--ok);}
-  .ocols{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;}
-  @media(max-width:920px){.ocols{grid-template-columns:1fr;}}
-  table{width:100%;border-collapse:collapse;}
-  thead th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);padding:12px 18px;border-bottom:1px solid var(--line);background:#faf8f5;}
-  tbody td{padding:12px 18px;border-bottom:1px solid #f4f1ec;vertical-align:middle;font-size:13px;}
-  .dishc{font-weight:700;}
-  .dishc .p{font-size:11.5px;color:var(--ink3);font-weight:500;}
-  .pricec{font-weight:700;color:var(--ink);}
-  .toggle{width:38px;height:22px;border-radius:999px;background:var(--accent);position:relative;display:inline-block;}
-  .toggle.off{background:#d6d3d1;}
-  .toggle i{position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s;}
-  .toggle.off i{left:2px;}
-  .prio{padding:13px 18px;border-top:1px solid #f4f1ec;display:flex;gap:11px;align-items:flex-start;}
-  .prio:first-of-type{border-top:0;}
-  .prio .pn{width:22px;height:22px;border-radius:6px;background:var(--accent-soft);color:var(--accent-d);display:grid;place-items:center;font-weight:800;font-size:11px;flex:0 0 22px;margin-top:1px;}
-  .prio .pt{font-weight:600;font-size:13.5px;}
-  .prio .ps{font-size:12px;color:var(--ink3);}
-  .order{padding:12px 18px;border-top:1px solid #f4f1ec;display:flex;align-items:center;gap:11px;}
-  .order:first-of-type{border-top:0;}
-  .order .dotlive{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:0 0 8px;}
-  .order .ot{font-weight:600;font-size:13.5px;}
-  .order .os{font-size:12px;color:var(--ink3);}
-  .order .oa{margin-left:auto;font-weight:700;color:var(--accent-d);}
-
-  /* ===== Live staff ===== */
-  .feed{max-width:720px;}
-  .ev{padding:14px 18px;border-top:1px solid #f4f1ec;display:flex;gap:13px;align-items:flex-start;}
-  .ev:first-of-type{border-top:0;}
-  .ev .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:14px;flex:0 0 34px;}
-  .ev .ic.new{background:var(--info-bg);color:var(--info);}
-  .ev .ic.food{background:var(--accent-soft);color:var(--accent-d);}
-  .ev .ic.alert{background:var(--crit-bg);color:var(--crit);}
-  .ev .ic.ok{background:var(--ok-bg);color:var(--ok);}
-  .ev .et{font-weight:600;font-size:13.5px;}
-  .ev .es{font-size:12.5px;color:var(--ink3);margin-top:1px;}
-  .ev .time{margin-left:auto;font-size:11.5px;color:var(--ink3);white-space:nowrap;}
-  .ev .lng{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--info);background:var(--info-bg);padding:1px 6px;border-radius:4px;margin-left:6px;}
-
-  .foot{max-width:1180px;margin:0 auto;padding:22px;color:var(--ink3);font-size:12px;border-top:1px solid var(--line);}
-  .foot b{color:var(--ink2);}
-</style>
+<link rel="stylesheet" href="shared/styles.css">
 </head>
 <body>
 
-<div class="banner"><span class="pill">Concept</span> <b>Sample concept built by TruePulse OS for this posting.</b> Neutral placeholder brand and sample data, showing how the guest, owner, and staff sides would feel. Nothing here is a live product.</div>
+<div class="banner"><span class="pill">Interactive concept</span> - A working sample built for this proposal. Simulated assistant, sample data only, stored in your browser. Not the final product.</div>
 
 <div class="top">
-  <div class="logo"><span class="mark">M</span> Maison <span style="font-weight:500;color:#a8a29e;font-size:12px;">hospitality assistant concept</span></div>
-  <div class="ctx">Restaurant: <b>Sample Bistro</b> · AI on <b>OpenAI GPT-4o</b> · multi-tenant, menu-grounded</div>
-  <div class="right"><span class="role">Concept preview</span><span class="who">SB</span></div>
+  <div class="logo"><span class="mark">H</span> Harbor &amp; Vine <span class="sub">sample restaurant</span></div>
+  <div class="ctx">Three roles · <b>one shared live state</b> · menu-grounded by design</div>
+  <div class="right"><span class="role">Overview</span></div>
 </div>
 
-<div class="tabs">
-  <div class="tab on" data-v="guest"><span class="num">1</span> Guest assistant</div>
-  <div class="tab" data-v="owner"><span class="num">2</span> Owner dashboard</div>
-  <div class="tab" data-v="staff"><span class="num">3</span> Live staff feed</div>
-</div>
+<nav class="tabs">
+  <a class="tab on" href="index.html"><span class="num">◆</span> Overview</a>
+  <a class="tab" href="guest.html"><span class="num">1</span> Guest</a>
+  <a class="tab" href="owner.html"><span class="num">2</span> Owner</a>
+  <a class="tab" href="staff.html"><span class="num">3</span> Staff</a>
+</nav>
 
 <div class="wrap">
 
-  <!-- ===================== GUEST ===================== -->
-  <div class="view on" id="guest">
-    <div class="flow"><b>Guest side - opens in the phone browser, no download.</b> A guest scans a QR at the table and chats with an assistant grounded to that restaurant's live menu. It recommends only real dishes, lifts the check with smart pairings, and speaks the guest's language.</div>
-    <div class="gcols">
-      <div class="phone">
-        <div class="screen">
-          <div class="gbar"><span class="gm">SB</span><div><div class="gt">Sample Bistro</div><div class="gs">● Table 12 · assistant online</div></div></div>
-          <div class="ground">◆ Grounded to Sample Bistro's live menu - 47 dishes</div>
-          <div class="langrow"><span class="lang on">EN</span><span class="lang">ES</span><span class="lang">AR &nbsp;(right-to-left)</span></div>
-          <div class="chat">
-            <div class="b me">I'm vegetarian and I love a bit of spice. What's good tonight?</div>
-            <div class="b ai">Great combo to work with. Two on tonight's menu land right in that lane:</div>
-            <div class="rec">
-              <div class="dish">
-                <img class="thumb" src="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=120&h=120&fit=crop" alt="">
-                <div><div class="dn">Harissa Roasted Cauliflower</div><div class="dd">Vegetarian · medium heat</div><span class="tag">On menu</span></div>
-                <div class="dp">$16</div>
-              </div>
-              <div class="dish">
-                <img class="thumb" src="https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=120&h=120&fit=crop" alt="">
-                <div><div class="dn">Spiced Chickpea Tagine</div><div class="dd">Vegetarian · warm spice</div><span class="tag">On menu</span></div>
-                <div class="dp">$19</div>
-              </div>
-              <div class="pair">Want to make it a meal? Guests love the <b>Charred Corn starter (+$7)</b> and a <b>mint lemonade (+$5)</b> with the tagine.</div>
-            </div>
-            <div class="b me">The tagine, and add the corn.</div>
-            <div class="b ai">Nice pick. Added the tagine and charred corn - $26. Sending it to your server now. Anything for the table to share?</div>
-          </div>
-          <div class="langrow" style="margin-top:0"></div>
-          <div class="ginput"><span class="gi">Message Sample Bistro...</span><span class="gsend">↑</span></div>
-        </div>
-      </div>
-      <div class="gside">
-        <h3>Why this lifts the check on its own</h3>
-        <p>The assistant never pushes a hard sell. It reads what the guest actually wants, recommends real dishes from the live menu, and offers the pairing a good server would - so the average check rises naturally and the guest feels looked after.</p>
-        <div class="feat"><span class="fi">◆</span><div class="fb"><b>Menu-grounded, never invented</b><span>Answers only from that restaurant's live menu; flags anything off-menu instead of guessing.</span></div></div>
-        <div class="feat"><span class="fi">↑</span><div class="fb"><b>Smart pairings and upsells</b><span>Suggests a starter, side, or drink that fits - the quiet lift on every check.</span></div></div>
-        <div class="feat"><span class="fi">🗣</span><div class="fb"><b>English, Spanish, Arabic</b><span>Guest picks a language; Arabic renders right-to-left, correctly.</span></div></div>
-        <div class="feat"><span class="fi">◷</span><div class="fb"><b>Eases the peak-hour rush</b><span>Guests self-serve answers and pre-build orders, so staff handle the moments that matter.</span></div></div>
-      </div>
-    </div>
+  <div class="hero">
+    <h1>Three roles, one shared live state</h1>
+    <p>This working demo shows the core idea of the product: the guest assistant, the owner dashboard, and the staff feed all read and write the <b>same live menu data</b> (stored in your browser). Change something as the owner and the assistant's answers change instantly. That is what "AI grounded to the live menu" means in practice.</p>
   </div>
 
-  <!-- ===================== OWNER ===================== -->
-  <div class="view" id="owner">
-    <div class="flow"><b>Owner side - your dashboard.</b> Manage the menu the assistant is grounded to, see the day's priorities, watch live orders come in, and track the numbers that show the lift. Each restaurant sees only its own data - multi-tenant by design.</div>
-    <div class="tiles">
-      <div class="tile ok"><div class="n">$52.40</div><div class="l">Avg check today</div><div class="up">▲ 18% vs. last month</div></div>
-      <div class="tile"><div class="n">134</div><div class="l">Covers today</div></div>
-      <div class="tile"><div class="n">Tagine</div><div class="l">Top AI-featured dish</div></div>
-      <div class="tile"><div class="n">7-9pm</div><div class="l">Peak load</div></div>
-    </div>
-    <div class="ocols">
-      <div class="card">
-        <div class="hd"><h2>Menu management</h2><span class="count">assistant grounded to these</span></div>
-        <table>
-          <thead><tr><th>Dish</th><th>Price</th><th>AI-featured</th></tr></thead>
-          <tbody>
-            <tr><td class="dishc">Spiced Chickpea Tagine<span class="p">Mains · vegetarian</span></td><td class="pricec">$19</td><td><span class="toggle"><i></i></span></td></tr>
-            <tr><td class="dishc">Harissa Roasted Cauliflower<span class="p">Mains · vegetarian</span></td><td class="pricec">$16</td><td><span class="toggle"><i></i></span></td></tr>
-            <tr><td class="dishc">Charred Corn<span class="p">Starters</span></td><td class="pricec">$7</td><td><span class="toggle"><i></i></span></td></tr>
-            <tr><td class="dishc">Braised Short Rib<span class="p">Mains</span></td><td class="pricec">$32</td><td><span class="toggle off"><i></i></span></td></tr>
-            <tr><td class="dishc">Mint Lemonade<span class="p">Drinks · non-alcoholic</span></td><td class="pricec">$5</td><td><span class="toggle"><i></i></span></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div>
-        <div class="card" style="margin-bottom:20px;">
-          <div class="hd"><h2>Today's priorities</h2></div>
-          <div class="prio"><span class="pn">1</span><div><div class="pt">Push the tagine</div><div class="ps">High margin, strong stock - featured in the assistant.</div></div></div>
-          <div class="prio"><span class="pn">2</span><div><div class="pt">86 the branzino</div><div class="ps">Out of stock; assistant will stop recommending it.</div></div></div>
-          <div class="prio"><span class="pn">3</span><div><div class="pt">Staff the 7-9pm peak</div><div class="ps">Busiest window; assistant absorbs table questions.</div></div></div>
-        </div>
-        <div class="card">
-          <div class="hd"><h2>Live orders</h2><span class="count">● streaming</span></div>
-          <div class="order"><span class="dotlive"></span><div><div class="ot">Table 12</div><div class="os">Tagine + charred corn</div></div><span class="oa">$26</span></div>
-          <div class="order"><span class="dotlive"></span><div><div class="ot">Table 5</div><div class="os">Short rib + house red</div></div><span class="oa">$47</span></div>
-          <div class="order"><span class="dotlive"></span><div><div class="ot">Table 9</div><div class="os">Cauliflower + lemonade</div></div><span class="oa">$21</span></div>
-        </div>
-      </div>
-    </div>
+  <div class="launch">
+    <a class="lcard" href="guest.html">
+      <div class="lic">1</div>
+      <h3>Guest assistant</h3>
+      <p>A phone-framed chat that answers from tonight's live menu. Quick replies, free text, and a full EN / ES / AR language toggle with real right-to-left Arabic.</p>
+      <span class="go">Open the guest view →</span>
+    </a>
+    <a class="lcard" href="owner.html">
+      <div class="lic">2</div>
+      <h3>Owner dashboard</h3>
+      <p>86 a dish with one switch, edit prices inline, and watch live analytics: covers, average check, top seller, sales by hour, and language coverage.</p>
+      <span class="go">Open the owner view →</span>
+    </a>
+    <a class="lcard" href="staff.html">
+      <div class="lic">3</div>
+      <h3>Staff feed</h3>
+      <p>A simulated real-time floor feed: new orders, translated guest questions, allergy flags, and 86 alerts that appear the moment the owner makes a change.</p>
+      <span class="go">Open the staff view →</span>
+    </a>
   </div>
 
-  <!-- ===================== STAFF ===================== -->
-  <div class="view" id="staff">
-    <div class="flow"><b>Staff side - real-time.</b> The guest interface and the floor stay in sync. Orders, questions, and allergy flags arrive the moment a guest sends them, in the guest's language with a translation for staff - so peak hours run calmer.</div>
-    <div class="card feed">
-      <div class="hd"><h2>Live floor feed</h2><span class="count">● connected</span></div>
-      <div class="ev"><span class="ic food">▲</span><div><div class="et">Table 12 placed an order</div><div class="es">Spiced Chickpea Tagine + Charred Corn - sent to kitchen</div></div><span class="time">just now</span></div>
-      <div class="ev"><span class="ic alert">!</span><div><div class="et">Allergy flag - Table 5 <span class="lng">ES → EN</span></div><div class="es">Guest noted a shellfish allergy; short rib is clear, kitchen notified.</div></div><span class="time">1 min</span></div>
-      <div class="ev"><span class="ic new">?</span><div><div class="et">Table 9 asked a question <span class="lng">AR → EN</span></div><div class="es">"Is the lemonade sweetened?" - assistant answered from the menu; no staff time needed.</div></div><span class="time">3 min</span></div>
-      <div class="ev"><span class="ic ok">✓</span><div><div class="et">Table 3 ready for the check</div><div class="es">Guest requested the bill through the assistant.</div></div><span class="time">6 min</span></div>
-      <div class="ev"><span class="ic food">▲</span><div><div class="et">Table 7 added a round</div><div class="es">Two mint lemonades - added to the open tab.</div></div><span class="time">8 min</span></div>
-    </div>
+  <div class="try">
+    <h4>Try this, 60 seconds</h4>
+    <ol>
+      <li>Open the <b>Owner</b> dashboard and flip the switch to 86 the <b>Grilled Atlantic Salmon</b>.</li>
+      <li>Open the <b>Guest</b> assistant and tap "Is the salmon available?" It now says the salmon is off tonight and suggests another main, at its live price.</li>
+      <li>Back in <b>Owner</b>, change a price. Ask the guest assistant for a recommendation and it quotes the new price.</li>
+      <li>Open the <b>Staff</b> feed. Your 86 and price changes appear there as alerts, alongside the simulated floor activity.</li>
+      <li>Tip: open Owner and Guest in two browser tabs side by side. Changes sync across tabs live.</li>
+    </ol>
   </div>
 
 </div>
 
-<div class="foot">Concept by <b>TruePulse OS</b> · built for the "AI-powered hospitality assistant for full-service restaurants" posting · neutral sample brand and data · <b>not a live product</b>.</div>
+<div class="foot">
+  <b>Harbor &amp; Vine (Sample Restaurant)</b> · interactive concept demo · all data is sample data and lives only in your browser
+  <span class="sp">|</span> <a class="reset" href="#" data-reset-demo>Reset demo data</a>
+  <span class="sp">|</span> <a href="legacy.html">Original static mockup</a>
+</div>
 
+<script src="shared/app.js"></script>
 <script>
-  document.querySelectorAll('.tab').forEach(function(t){
-    t.addEventListener('click',function(){
-      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
-      document.querySelectorAll('.view').forEach(function(x){x.classList.remove('on');});
-      t.classList.add('on');
-      document.getElementById(t.dataset.v).classList.add('on');
-      window.scrollTo({top:0,behavior:'smooth'});
-    });
-  });
-  document.querySelectorAll('.lang').forEach(function(l){
-    l.addEventListener('click',function(){
-      document.querySelectorAll('.lang').forEach(function(x){x.classList.remove('on');});
-      l.classList.add('on');
-    });
-  });
+  /* Seed the demo data on first visit so every page opens ready. */
+  try { HV.load(); } catch (e) { /* ignore */ }
 </script>
 </body>
 </html>
