@@ -37,6 +37,7 @@
           <div><div class="gt">Harbor &amp; Vine</div><div class="gs" id="gStatus">● Table 12 · assistant online</div></div>
           <span class="sim" id="gSim">Simulated responses, no live AI</span>
         </div>
+        <div class="qr" id="gQr">Simulated QR entry: this chat opened from the Table 12 QR code, straight in the phone browser. No app, no download.</div>
         <div class="ground" id="gGround">◆ Grounded to the live menu</div>
         <div class="langrow" id="gLangs">
           <button type="button" class="lang on" data-lang="en">EN</button>
@@ -57,6 +58,7 @@
       <p>The assistant never invents dishes. It reads the same menu record the owner edits, so availability, prices, and allergen answers are always current. The responses here are scripted for the demo, the grounding behavior is the point.</p>
       <div class="feat"><span class="fi">◆</span><div class="fb"><b>Menu-grounded, never invented</b><span>86 the salmon in the Owner tab, then ask about it here. The assistant declines it and offers another main at its live price.</span></div></div>
       <div class="feat"><span class="fi">$</span><div class="fb"><b>Live prices</b><span>Change a price in the Owner tab and the assistant quotes the new number on the next question.</span></div></div>
+      <div class="feat"><span class="fi">+$</span><div class="fb"><b>Lifts the check with smart pairings</b><span>Ask "Is the salmon available?" while it is on the menu. The assistant suggests a real pairing from the live menu with the exact math, that is the average-check lift shown as behavior.</span></div></div>
       <div class="feat"><span class="fi">🗣</span><div class="fb"><b>English, Spanish, Arabic</b><span>The toggle switches labels, quick replies, and answers. Arabic renders fully right-to-left.</span></div></div>
       <div class="feat"><span class="fi">?</span><div class="fb"><b>Type your own question</b><span>Free text is keyword-matched to the same intents: recommendations, gluten free, dish availability, splitting the check.</span></div></div>
     </div>
@@ -80,6 +82,7 @@
   var input = document.getElementById('gInput');
   var langRow = document.getElementById('gLangs');
   var groundEl = document.getElementById('gGround');
+  var qrEl = document.getElementById('gQr');
   var statusEl = document.getElementById('gStatus');
   var simEl = document.getElementById('gSim');
   if (!chat || !chipsBox || !form || !input) { return; }
@@ -94,6 +97,9 @@
       status: '● Table 12 · assistant online',
       sim: 'Simulated responses, no live AI',
       placeholder: 'Message Harbor & Vine...',
+      qr: 'Simulated QR entry: this chat opened from the Table 12 QR code, straight in the phone browser. No app, no download.',
+      pairLabel: function (p) { return 'Smart pairing +' + p; },
+      pairLine: function (a, from, to) { return 'Most guests add the ' + a.n + ' (' + a.p + ') with it. Shall I add one? That takes the order from ' + from + ' to ' + to + '.'; },
       grounded: function (n) { return '◆ Grounded to the live menu, ' + n + ' dishes available tonight'; },
       chips: [
         { label: 'What do you recommend?', intent: 'recommend' },
@@ -124,6 +130,9 @@
       status: '● Mesa 12 · asistente en línea',
       sim: 'Respuestas simuladas, sin IA en vivo',
       placeholder: 'Escriba a Harbor & Vine...',
+      qr: 'Entrada QR simulada: este chat se abrió desde el código QR de la Mesa 12, directo en el navegador del teléfono. Sin aplicación y sin descargas.',
+      pairLabel: function (p) { return 'Maridaje sugerido +' + p; },
+      pairLine: function (a, from, to) { return 'La mayoría lo acompaña con ' + a.n + ' (' + a.p + '). ¿Se lo agrego? El pedido pasaría de ' + from + ' a ' + to + '.'; },
       grounded: function (n) { return '◆ Conectado al menú en vivo, ' + n + ' platos disponibles esta noche'; },
       chips: [
         { label: '¿Qué me recomienda?', intent: 'recommend' },
@@ -154,6 +163,9 @@
       status: '● طاولة 12 · المساعد متصل',
       sim: 'ردود محاكاة، بدون ذكاء اصطناعي مباشر',
       placeholder: 'اكتب رسالة إلى Harbor & Vine...',
+      qr: 'محاكاة الدخول عبر رمز QR: فتحت هذه المحادثة من رمز الطاولة 12 مباشرة في متصفح الهاتف. بدون تطبيق وبدون تنزيل.',
+      pairLabel: function (p) { return 'إضافة مقترحة +' + p; },
+      pairLine: function (a, from, to) { return 'معظم الضيوف يطلبون معه ' + a.n + ' (' + a.p + '). هل أضيفه لك؟ سيصبح الطلب من ' + from + ' إلى ' + to + '.'; },
       grounded: function (n) { return '◆ متصل بالقائمة المباشرة، ' + n + ' طبقا متوفرا الليلة'; },
       chips: [
         { label: 'بماذا تنصحني؟', intent: 'recommend' },
@@ -252,12 +264,26 @@
     return L().gluten(listNames(gf, 5));
   }
 
+  /* Smart pairings: each main maps to a real dish on the same live menu. The
+     pairing only shows when both dishes are actually available right now. */
+  var PAIR = { salmon: 'lemonade', shortrib: 'cornribs', tagine: 'hibiscus', chicken: 'lemonade', risotto: 'hibiscus' };
+
   function replyAvail(itemId) {
     var state = HV.load();
     var item = HV.getItem(state, itemId);
     if (!item) { return L().fallback; }
     var v = itemView(item);
-    if (item.available) { return L().availYes(v); }
+    if (item.available) {
+      var out = { text: L().availYes(v) };
+      var pairItem = PAIR[item.id] ? HV.getItem(state, PAIR[item.id]) : null;
+      if (pairItem && pairItem.available) {
+        out.pair = {
+          label: L().pairLabel(HV.fmtPrice(pairItem.price)),
+          text: L().pairLine(itemView(pairItem), HV.fmtPrice(item.price), HV.fmtPrice(item.price + pairItem.price))
+        };
+      }
+      return out;
+    }
     var sameCat = byCategory(availItems(state), item.category);
     var alt = pickFeaturedFirst(sameCat);
     if (alt) { return L().availNo(v, itemView(alt)); }
@@ -320,6 +346,19 @@
     return el;
   }
 
+  /* A pairing renders as its own labeled bubble, so the check-lift moment is visible. */
+  function addPairBubble(p) {
+    var el = document.createElement('div');
+    el.className = 'b ai pairb';
+    var tag = document.createElement('span');
+    tag.className = 'ptag';
+    tag.textContent = p.label;
+    el.appendChild(tag);
+    el.appendChild(document.createTextNode(p.text));
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
   var busy = false;
   function respond(makeReply) {
     busy = true;
@@ -329,10 +368,15 @@
     chat.appendChild(t);
     chat.scrollTop = chat.scrollHeight;
     window.setTimeout(function () {
-      var text;
-      try { text = makeReply(); } catch (e) { text = L().fallback; }
+      var out;
+      try { out = makeReply(); } catch (e) { out = L().fallback; }
       if (t.parentNode) { t.parentNode.removeChild(t); }
-      addBubble('ai', text);
+      if (out && typeof out === 'object') {
+        addBubble('ai', out.text);
+        if (out.pair) { addPairBubble(out.pair); }
+      } else {
+        addBubble('ai', out);
+      }
       busy = false;
     }, 650);
   }
@@ -377,6 +421,7 @@
     chipsBox.setAttribute('dir', dir);
     input.setAttribute('dir', dir);
     if (groundEl) { groundEl.setAttribute('dir', dir); }
+    if (qrEl) { qrEl.setAttribute('dir', dir); qrEl.textContent = pack.qr; }
     input.placeholder = pack.placeholder;
     if (statusEl) { statusEl.textContent = pack.status; }
     if (simEl) { simEl.textContent = pack.sim; }

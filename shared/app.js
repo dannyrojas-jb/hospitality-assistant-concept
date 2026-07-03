@@ -6,6 +6,7 @@ var HV = (function () {
   'use strict';
 
   var KEY = 'hv_demo_state_v1';
+  var KEY2 = 'hv_demo_state_v1_b'; /* second sample tenant, fully separate data set */
   var VERSION = 1;
   var localSubs = [];
 
@@ -191,6 +192,15 @@ var HV = (function () {
     ];
   }
 
+  function seedPriorities() {
+    return [
+      { id: 'p1', text: "Post tonight's specials to the menu", done: true },
+      { id: 'p2', text: 'Confirm the patio setup for the 7pm party of 8', done: false },
+      { id: 'p3', text: 'Review the guest questions the assistant handed to staff yesterday', done: false },
+      { id: 'p4', text: 'Check stock with the kitchen before the dinner rush', done: false }
+    ];
+  }
+
   function seedState() {
     var menu = seedMenu();
     return {
@@ -198,8 +208,125 @@ var HV = (function () {
       restaurant: 'Harbor & Vine (Sample Restaurant)',
       menu: menu,
       orders: seedOrders(menu),
-      events: seedEvents()
+      events: seedEvents(),
+      priorities: seedPriorities()
     };
+  }
+
+  /* ---------- Second sample tenant: Blue Fig Bistro ----------
+     A completely separate data set under its own storage key, used by the
+     owner dashboard's multi-tenant preview. Nothing is shared with Harbor & Vine. */
+
+  function seedMenuB() {
+    return [
+      {
+        id: 'zflat', category: 'Starters', price: 8, available: true, featured: true,
+        allergens: ['gluten', 'sesame'],
+        kw: ['flatbread', 'zaatar', 'pan plano', 'زعتر', 'خبز'],
+        name: { en: "Za'atar Flatbread", es: "Pan Plano con Za'atar", ar: 'خبز مسطح بالزعتر' },
+        desc: {
+          en: "Warm flatbread with za'atar, olive oil, and labneh.",
+          es: "Pan plano caliente con za'atar, aceite de oliva y labneh.",
+          ar: 'خبز مسطح دافئ بالزعتر وزيت الزيتون واللبنة.'
+        }
+      },
+      {
+        id: 'figsalad', category: 'Starters', price: 12, available: true, featured: false,
+        allergens: ['dairy', 'nuts'],
+        kw: ['fig', 'salad', 'higos', 'ensalada', 'تين', 'سلطة'],
+        name: { en: 'Fig and Goat Cheese Salad', es: 'Ensalada de Higos y Queso de Cabra', ar: 'سلطة التين وجبن الماعز' },
+        desc: {
+          en: 'Fresh figs with goat cheese, arugula, and toasted walnuts.',
+          es: 'Higos frescos con queso de cabra, rúcula y nueces tostadas.',
+          ar: 'تين طازج مع جبن الماعز والجرجير والجوز المحمص.'
+        }
+      },
+      {
+        id: 'kofta', category: 'Mains', price: 26, available: true, featured: true,
+        allergens: [],
+        kw: ['kofta', 'lamb', 'cordero', 'كفتة', 'ضأن'],
+        name: { en: 'Grilled Lamb Kofta', es: 'Kofta de Cordero a la Parrilla', ar: 'كفتة الضأن المشوية' },
+        desc: {
+          en: 'Char grilled lamb kofta with saffron rice and mint yogurt.',
+          es: 'Kofta de cordero a la parrilla con arroz de azafrán y yogur de menta.',
+          ar: 'كفتة ضأن مشوية مع أرز بالزعفران ولبن بالنعناع.'
+        }
+      },
+      {
+        id: 'seabass', category: 'Mains', price: 29, available: true, featured: false,
+        allergens: ['fish'],
+        kw: ['sea bass', 'bass', 'lubina', 'قاروص', 'سمك'],
+        name: { en: 'Pan Seared Sea Bass', es: 'Lubina a la Sartén', ar: 'سمك القاروص المحمر' },
+        desc: {
+          en: 'Sea bass with charred lemon, herbs, and olive oil potatoes.',
+          es: 'Lubina con limón asado, hierbas y papas al aceite de oliva.',
+          ar: 'سمك قاروص مع ليمون محمص وأعشاب وبطاطس بزيت الزيتون.'
+        }
+      },
+      {
+        id: 'halloumi', category: 'Mains', price: 18, available: true, featured: false,
+        allergens: ['dairy'],
+        kw: ['halloumi', 'حلومي'],
+        name: { en: 'Honey Glazed Halloumi Bowl', es: 'Bol de Halloumi con Miel', ar: 'طبق الحلومي بالعسل' },
+        desc: {
+          en: 'Seared halloumi over grains with honey, herbs, and citrus.',
+          es: 'Halloumi dorado sobre granos con miel, hierbas y cítricos.',
+          ar: 'حلومي محمر فوق الحبوب مع العسل والأعشاب والحمضيات.'
+        }
+      },
+      {
+        id: 'baklava', category: 'Desserts', price: 9, available: true, featured: false,
+        allergens: ['gluten', 'nuts'],
+        kw: ['baklava', 'pistachio', 'pistacho', 'بقلاوة', 'فستق'],
+        name: { en: 'Pistachio Baklava', es: 'Baklava de Pistacho', ar: 'بقلاوة بالفستق' },
+        desc: {
+          en: 'Layered pastry with pistachio and orange blossom syrup.',
+          es: 'Hojaldre en capas con pistacho y jarabe de azahar.',
+          ar: 'رقائق معجنات بالفستق وشراب زهر البرتقال.'
+        }
+      }
+    ];
+  }
+
+  function seedOrdersB(menu) {
+    var priceOf = {};
+    var i;
+    for (i = 0; i < menu.length; i++) { priceOf[menu[i].id] = menu[i].price; }
+    var raw = [
+      { table: 3, hour: 18, covers: 2, items: ['zflat', 'kofta', 'baklava'] },
+      { table: 7, hour: 19, covers: 2, items: ['figsalad', 'seabass'] },
+      { table: 2, hour: 19, covers: 4, items: ['zflat', 'figsalad', 'kofta', 'halloumi', 'baklava'] },
+      { table: 5, hour: 20, covers: 2, items: ['halloumi', 'seabass', 'baklava'] },
+      { table: 9, hour: 21, covers: 3, items: ['zflat', 'kofta', 'seabass'] }
+    ];
+    var orders = [];
+    for (i = 0; i < raw.length; i++) {
+      var o = raw[i];
+      var total = 0;
+      for (var j = 0; j < o.items.length; j++) { total += (priceOf[o.items[j]] || 0); }
+      orders.push({ id: 'b' + (i + 1), table: o.table, hour: o.hour, covers: o.covers, items: o.items, total: total });
+    }
+    return orders;
+  }
+
+  function seedStateB() {
+    var menu = seedMenuB();
+    return {
+      version: VERSION,
+      restaurant: 'Blue Fig Bistro (Sample Restaurant B)',
+      menu: menu,
+      orders: seedOrdersB(menu),
+      events: [],
+      priorities: [
+        { id: 'b1', text: 'Print the updated dinner menu for the host stand', done: false },
+        { id: 'b2', text: 'Taste the new baklava batch with the pastry chef', done: true },
+        { id: 'b3', text: 'Schedule the weekend patio staff', done: false }
+      ]
+    };
+  }
+
+  function seedFor(key) {
+    return key === KEY2 ? seedStateB() : seedState();
   }
 
   /* ---------- Storage ---------- */
@@ -210,33 +337,50 @@ var HV = (function () {
       Array.isArray(s.orders) && Array.isArray(s.events);
   }
 
-  function load() {
+  /* All storage functions take an optional key so the owner dashboard can work
+     against either tenant. Every existing call without a key stays on Harbor & Vine. */
+
+  function load(key) {
+    key = key || KEY;
     var s = null;
     try {
-      var raw = localStorage.getItem(KEY);
+      var raw = localStorage.getItem(key);
       if (raw) { s = JSON.parse(raw); }
     } catch (e) { s = null; }
-    if (!valid(s)) { s = reset(false); }
+    if (!valid(s)) { s = reset(false, key); }
+    if (!Array.isArray(s.priorities)) { s.priorities = seedFor(key).priorities; }
     return s;
   }
 
-  function save(s) {
-    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* storage may be unavailable, demo keeps running in memory */ }
-    notify(s);
+  function save(s, key) {
+    key = key || KEY;
+    try { localStorage.setItem(key, JSON.stringify(s)); } catch (e) { /* storage may be unavailable, demo keeps running in memory */ }
+    notify(s, key);
     return s;
   }
 
-  function reset(reloadPage) {
-    var s = seedState();
-    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* ignore */ }
+  function reset(reloadPage, key) {
+    if (key) {
+      var s = seedFor(key);
+      try { localStorage.setItem(key, JSON.stringify(s)); } catch (e) { /* ignore */ }
+      if (reloadPage) { window.location.reload(); }
+      return s;
+    }
+    /* No key: full demo reset, both sample tenants reseeded. */
+    var sMain = seedState();
+    try {
+      localStorage.setItem(KEY, JSON.stringify(sMain));
+      localStorage.setItem(KEY2, JSON.stringify(seedStateB()));
+    } catch (e) { /* ignore */ }
     if (reloadPage) { window.location.reload(); }
-    return s;
+    return sMain;
   }
 
-  /* Change notifications: same tab via subscribers, other tabs via the storage event. */
-  function notify(s) {
+  /* Change notifications: same tab via subscribers, other tabs via the storage event.
+     Callbacks receive (state, key) so a page can ignore the tenant it is not showing. */
+  function notify(s, key) {
     for (var i = 0; i < localSubs.length; i++) {
-      try { localSubs[i](s); } catch (e) { /* a bad subscriber never breaks the page */ }
+      try { localSubs[i](s, key || KEY); } catch (e) { /* a bad subscriber never breaks the page */ }
     }
   }
 
@@ -244,8 +388,8 @@ var HV = (function () {
     if (typeof cb !== 'function') { return; }
     localSubs.push(cb);
     window.addEventListener('storage', function (ev) {
-      if (ev.key === KEY) {
-        try { cb(load()); } catch (e) { /* ignore */ }
+      if (ev.key === KEY || ev.key === KEY2) {
+        try { cb(load(ev.key), ev.key); } catch (e) { /* ignore */ }
       }
     });
   }
@@ -265,8 +409,8 @@ var HV = (function () {
     return null;
   }
 
-  function setAvailability(id, available) {
-    var s = load();
+  function setAvailability(id, available, key) {
+    var s = load(key);
     var item = getItem(s, id);
     if (!item) { return s; }
     item.available = !!available;
@@ -286,11 +430,11 @@ var HV = (function () {
         lang: ''
       });
     }
-    return save(s);
+    return save(s, key);
   }
 
-  function setPrice(id, price) {
-    var s = load();
+  function setPrice(id, price, key) {
+    var s = load(key);
     var item = getItem(s, id);
     var n = Number(price);
     if (!item || isNaN(n) || n < 0) { return s; }
@@ -303,7 +447,16 @@ var HV = (function () {
       sub: 'Now ' + fmtPrice(n) + '. The guest assistant quotes the new price immediately.',
       lang: ''
     });
-    return save(s);
+    return save(s, key);
+  }
+
+  function togglePriority(id, key) {
+    var s = load(key);
+    var list = s.priorities || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { list[i].done = !list[i].done; break; }
+    }
+    return save(s, key);
   }
 
   var evSeq = 0;
@@ -321,10 +474,10 @@ var HV = (function () {
     return s;
   }
 
-  function addEvent(ev) {
-    var s = load();
+  function addEvent(ev, key) {
+    var s = load(key);
     addEventTo(s, ev);
-    return save(s);
+    return save(s, key);
   }
 
   function timeAgo(ts) {
@@ -354,6 +507,7 @@ var HV = (function () {
 
   return {
     KEY: KEY,
+    KEY2: KEY2,
     load: load,
     save: save,
     reset: reset,
@@ -362,6 +516,7 @@ var HV = (function () {
     getItem: getItem,
     setAvailability: setAvailability,
     setPrice: setPrice,
+    togglePriority: togglePriority,
     addEvent: addEvent,
     timeAgo: timeAgo
   };

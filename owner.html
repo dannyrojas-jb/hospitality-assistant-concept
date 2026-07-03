@@ -14,7 +14,7 @@
 <div class="banner"><span class="pill">Interactive concept</span> - A working sample built for this proposal. Simulated assistant, sample data only, stored in your browser. Not the final product.</div>
 
 <div class="top">
-  <div class="logo"><span class="mark">H</span> Harbor &amp; Vine <span class="sub">sample restaurant</span></div>
+  <div class="logo"><span class="mark" id="oMark">H</span> <span id="oName">Harbor &amp; Vine</span> <span class="sub">sample restaurant</span></div>
   <div class="ctx">Owner side · <b>this is the state the assistant is grounded to</b></div>
   <div class="right"><span class="role">Owner view</span></div>
 </div>
@@ -27,7 +27,16 @@
 </nav>
 
 <div class="wrap">
-  <div class="flow"><b>Everything here is live.</b> Flip a switch to 86 a dish or click a price to edit it. The <a href="guest.html" style="text-decoration:underline;"><b>Guest assistant</b></a> answers from this exact data, and the <a href="staff.html" style="text-decoration:underline;"><b>Staff feed</b></a> gets an alert. Analytics below are computed from the seeded evening of orders.</div>
+  <div class="flow"><b>Everything here is live.</b> Flip a switch to 86 a dish or click a price to edit it. The <a href="guest.html" style="text-decoration:underline;"><b>Guest assistant</b></a> answers from this exact data, and the <a href="staff.html" style="text-decoration:underline;"><b>Staff feed</b></a> gets an alert. Analytics below are computed from the seeded evening of orders, and the daily priorities board is the owner's working list for tonight.</div>
+
+  <div class="tenantbar">
+    <div class="tlab"><b>Multi-tenant preview</b> (simulated): two sample restaurants, two fully separate data sets.</div>
+    <div class="tbtns" id="tenantBtns">
+      <button type="button" class="tbtn on" data-tenant="a">Harbor &amp; Vine</button>
+      <button type="button" class="tbtn" data-tenant="b">Blue Fig Bistro</button>
+    </div>
+    <div class="tnote">This dashboard can only ever see the selected restaurant's data, none of the other one's menu, orders, or priorities is reachable from here. In the product this isolation is enforced in Postgres with row-level security. The Guest and Staff tabs in this demo stay on Harbor &amp; Vine.</div>
+  </div>
 
   <div class="tiles" id="oTiles">
     <div class="tile"><div class="n" id="tCovers">0</div><div class="l">Covers tonight</div></div>
@@ -50,7 +59,12 @@
 
     <div>
       <div class="card" style="margin-bottom:20px;">
-        <div class="hd"><h2>Sales by hour</h2><span class="count">seeded evening, 15 orders</span></div>
+        <div class="hd"><h2>Daily priorities</h2><span class="count" id="prioCount"></span></div>
+        <div id="prioBox"></div>
+        <div class="note">The owner's working list for tonight. Check items off, they save instantly. When a dish is 86'd, a reminder is added here automatically.</div>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="hd"><h2>Sales by hour</h2><span class="count">seeded evening, peak hour highlighted</span></div>
         <div class="chartbox" id="chartBox"></div>
       </div>
       <div class="card">
@@ -63,7 +77,7 @@
 </div>
 
 <div class="foot">
-  <b>Harbor &amp; Vine (Sample Restaurant)</b> · interactive concept demo · all data is sample data and lives only in your browser
+  <b id="oFootName">Harbor &amp; Vine (Sample Restaurant)</b> · interactive concept demo · all data is sample data and lives only in your browser
   <span class="sp">|</span> <a class="reset" href="#" data-reset-demo>Reset demo data</a>
   <span class="sp">|</span> <a href="legacy.html">Original static mockup</a>
 </div>
@@ -76,7 +90,47 @@
   var menuBody = document.getElementById('menuBody');
   var chartBox = document.getElementById('chartBox');
   var covBox = document.getElementById('covBox');
+  var prioBox = document.getElementById('prioBox');
   if (!menuBody) { return; }
+
+  /* Multi-tenant preview: the owner dashboard can point at either sample
+     restaurant. Each tenant lives under its own storage key, nothing is shared.
+     The selection itself is remembered so a reload keeps the same restaurant. */
+  var TENANT_SEL = 'hv_demo_owner_tenant';
+  var TENANTS = {
+    a: { key: HV.KEY,  mark: 'H', short: 'Harbor & Vine',  full: 'Harbor & Vine (Sample Restaurant)' },
+    b: { key: HV.KEY2, mark: 'B', short: 'Blue Fig Bistro', full: 'Blue Fig Bistro (Sample Restaurant B)' }
+  };
+  var tenantId = 'a';
+  try { if (localStorage.getItem(TENANT_SEL) === 'b') { tenantId = 'b'; } } catch (e) { /* ignore */ }
+  var currentKey = TENANTS[tenantId].key;
+
+  function applyTenant() {
+    var t = TENANTS[tenantId];
+    currentKey = t.key;
+    var el;
+    el = document.getElementById('oMark'); if (el) { el.textContent = t.mark; }
+    el = document.getElementById('oName'); if (el) { el.textContent = t.short; }
+    el = document.getElementById('oFootName'); if (el) { el.textContent = t.full; }
+    var btns = document.querySelectorAll('#tenantBtns .tbtn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('on', btns[i].getAttribute('data-tenant') === tenantId);
+    }
+  }
+
+  var tenantBtns = document.getElementById('tenantBtns');
+  if (tenantBtns) {
+    tenantBtns.addEventListener('click', function (ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest('.tbtn') : null;
+      if (!btn) { return; }
+      var next = btn.getAttribute('data-tenant');
+      if (!TENANTS[next] || next === tenantId) { return; }
+      tenantId = next;
+      try { localStorage.setItem(TENANT_SEL, tenantId); } catch (e) { /* ignore */ }
+      applyTenant();
+      render(HV.load(currentKey));
+    });
+  }
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -145,11 +199,11 @@
     var btn = ev.target && ev.target.closest ? ev.target.closest('.toggle') : null;
     if (!btn) { return; }
     var id = btn.getAttribute('data-id');
-    var state = HV.load();
+    var state = HV.load(currentKey);
     var item = HV.getItem(state, id);
     if (!item) { return; }
-    HV.setAvailability(id, !item.available);
-    render(HV.load());
+    HV.setAvailability(id, !item.available, currentKey);
+    render(HV.load(currentKey));
   });
 
   menuBody.addEventListener('change', function (ev) {
@@ -158,13 +212,13 @@
     var id = inp.getAttribute('data-id');
     var val = parseFloat(inp.value);
     if (isNaN(val) || val < 0) {
-      var st = HV.load();
+      var st = HV.load(currentKey);
       var it = HV.getItem(st, id);
       if (it) { inp.value = it.price; }
       return;
     }
-    HV.setPrice(id, val);
-    render(HV.load());
+    HV.setPrice(id, val, currentKey);
+    render(HV.load(currentKey));
   });
 
   menuBody.addEventListener('keydown', function (ev) {
@@ -208,6 +262,47 @@
     chartBox.innerHTML = svg;
   }
 
+  /* ---------- Daily priorities ---------- */
+
+  function renderPriorities(state) {
+    if (!prioBox) { return; }
+    var list = state.priorities || [];
+    var html = '';
+    var open = 0;
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      if (!p.done) { open += 1; }
+      html += '<label class="prio' + (p.done ? ' done' : '') + '">' +
+        '<input type="checkbox" data-pid="' + esc(p.id) + '"' + (p.done ? ' checked' : '') + ' aria-label="' + esc(p.text) + '">' +
+        '<span>' + esc(p.text) + '</span></label>';
+    }
+    var off = [];
+    for (i = 0; i < state.menu.length; i++) {
+      if (!state.menu[i].available) { off.push(state.menu[i].name.en); }
+    }
+    if (off.length) {
+      open += 1;
+      var msg = off.length === 1
+        ? off[0] + " is 86'd. Restore it, or leave it off tonight's menu."
+        : off.length + " dishes are 86'd (" + off.join(', ') + "). Restore them, or leave them off tonight's menu.";
+      html += '<div class="prio auto"><span class="abadge">auto</span><span>' + esc(msg) + '</span></div>';
+    }
+    prioBox.innerHTML = html;
+    var pc = document.getElementById('prioCount');
+    if (pc) { pc.textContent = open === 1 ? '1 open' : open + ' open'; }
+  }
+
+  if (prioBox) {
+    prioBox.addEventListener('change', function (ev) {
+      var inp = ev.target;
+      if (!inp || !inp.getAttribute) { return; }
+      var pid = inp.getAttribute('data-pid');
+      if (!pid) { return; }
+      HV.togglePriority(pid, currentKey);
+      render(HV.load(currentKey));
+    });
+  }
+
   /* ---------- Language coverage ---------- */
 
   function renderCoverage(state) {
@@ -239,20 +334,24 @@
     try {
       renderTiles(state);
       renderMenu(state);
+      renderPriorities(state);
       renderChart(state);
       renderCoverage(state);
     } catch (e) { /* keep the page alive even if one panel fails */ }
   }
 
-  /* Re-render when another tab (guest or staff) writes to the store. */
-  HV.onChange(function (state) {
+  /* Re-render when another tab (guest or staff) writes to the store,
+     but only for the tenant this dashboard is currently showing. */
+  HV.onChange(function (state, key) {
+    if (key !== currentKey) { return; }
     if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('price')) {
       return; /* do not clobber an edit in progress */
     }
     render(state);
   });
 
-  render(HV.load());
+  applyTenant();
+  render(HV.load(currentKey));
 })();
 </script>
 </body>

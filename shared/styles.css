@@ -189,6 +189,32 @@ button.btn.primary:hover{background:var(--accent-d);color:#fff;}
 .empty{padding:34px 20px;text-align:center;color:var(--ink3);font-size:13px;}
 .empty b{display:block;color:var(--ink2);font-size:14px;margin-bottom:4px;}
 
+/* ===== Guest: simulated QR entry strip ===== */
+.qr{margin:10px 12px 0;font-size:11px;color:var(--info);background:var(--info-bg);border:1px solid #cffafe;border-radius:8px;padding:6px 10px;line-height:1.45;}
+
+/* ===== Guest: smart pairing bubble ===== */
+.b.ai.pairb{border-color:#fbe3c4;background:var(--accent-soft);}
+.ptag{display:block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-d);margin-bottom:4px;}
+
+/* ===== Owner: daily priorities ===== */
+.prio{display:flex;gap:10px;align-items:flex-start;padding:11px 18px;border-top:1px solid #f4f1ec;font-size:13px;color:var(--ink);cursor:pointer;}
+.prio:first-of-type{border-top:0;}
+.prio input{margin-top:2px;accent-color:var(--accent);width:15px;height:15px;flex:0 0 15px;cursor:pointer;}
+.prio.done span{color:var(--ink3);text-decoration:line-through;}
+.prio.auto{cursor:default;color:var(--ink2);}
+.abadge{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);background:var(--warn-bg);border:1px solid #fde68a;border-radius:4px;padding:1px 6px;flex:0 0 auto;margin-top:2px;}
+
+/* ===== Owner: multi-tenant preview bar ===== */
+.tenantbar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:0 0 20px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;box-shadow:0 1px 2px rgba(28,25,23,.04);}
+.tenantbar .tlab{font-size:12.5px;color:var(--ink2);min-width:0;}
+.tenantbar .tlab b{color:var(--ink);}
+.tbtns{display:flex;gap:8px;flex-wrap:wrap;}
+button.tbtn{font-size:12.5px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:999px;padding:6px 14px;cursor:pointer;transition:.15s;}
+button.tbtn:hover{border-color:var(--accent);color:var(--accent-d);}
+button.tbtn.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+button.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+.tenantbar .tnote{flex-basis:100%;font-size:11.5px;color:var(--ink3);}
+
 /* ===== Footer ===== */
 .foot{max-width:1180px;margin:0 auto;padding:22px;color:var(--ink3);font-size:12px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .foot b{color:var(--ink2);}
